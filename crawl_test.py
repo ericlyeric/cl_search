@@ -3,44 +3,53 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
-# keep track of number of pages
-MAX_PAGE_NUM = 15
-PAGE_NUM = 1
+class GoodReadsBookSearch():
+	def __init__(self):
+		self.MAX_PAGE_NUM = 15
+		self.driver = webdriver.Chrome()
+		self.filename = 'Motivational_and_Self_Improvement_Books'
 
-# open csv file
-with open('Motivational_and_Self_Improvement_Books.csv', 'w') as f:
-	f.write('Book Title, Book Rating\n')
+	def CreateCSV(self):
+		with open(self.filename + '.csv', 'w') as f:
+			f.write('Book Title, Book Rating\n')
 
-# open up chrome browser
-driver = webdriver.Chrome()
+	def WriteCSV(self, books, rating):
+		with open(self.filename + '.csv', 'a') as f:
+			for rank in range(len(books)):
+				f.write(books[rank].text + ',' + rating[rank].text 
+					+ '\n')
+	
+	def PopUpCheck(self):
+		try:
+			time.sleep(2)
+			self.driver.find_element_by_xpath('/html/body/div[5]\
+				/div/div/div[1]/button/img').click()
+		except:
+			pass
 
-for page in range(1, MAX_PAGE_NUM+1):
+	def PageSearch(self, url):
+		for page in range(1, self.MAX_PAGE_NUM + 1):
+			url_base = url
+			url_new = url_base + str(page)
+
+			self.driver.get(url_new)
+
+			# check and close pop up
+			self.PopUpCheck()
+
+			# extract books
+			books = self.driver.find_elements_by_class_name('bookTitle')
+			rating = self.driver.find_elements_by_class_name('minirating')
+
+			# save results to csv
+			self.WriteCSV(books, rating)
+			
+		# close browser when finished
+		self.driver.close()
+
+if __name__ == "__main__":
+	search1 = GoodReadsBookSearch()
+	search1.CreateCSV()
 	url = 'https://www.goodreads.com/list/show/7616.Motivational\
-	_and_Self_Improvement_Books?page='+str(page)
-
-	driver.get(url)
-
-	# wait to see if there is a pop up if there is then close the window
-	try:
-		time.sleep(2)
-		driver.find_element_by_xpath('/html/body/div[5]/div/div/div[1]/\
-			button/img').click()
-	except:
-		pass
-
-	try:
-		alert = driver.switch_to_alert()
-		alert.dismiss()
-	except:
-		pass
-
-	# extract books
-	books = driver.find_elements_by_class_name('bookTitle')
-	rating = driver.find_elements_by_class_name('minirating')
-
-	with open('Motivational_and_Self_Improvement_Books.csv', 'a') as f:
-		for rank in range(len(books)):
-			f.write(books[rank].text + ',' + rating[rank].text + '\n')
-
-# close browser when finished
-driver.close()
+		_and_Self_Improvement_Books?page='
+	search1.PageSearch(url)
